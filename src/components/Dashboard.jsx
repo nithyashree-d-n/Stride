@@ -1,4 +1,5 @@
 // src/components/Dashboard.jsx — Stride Adaptive
+// Proxy-aware: all AI calls route through /api/stride-ai — no client-side keys.
 import React, { useState, useRef, useEffect } from 'react';
 import { fetchTransformData, fetchMindMapCode } from '../api/transform';
 import { useTTS } from '../hooks/useTTS';
@@ -65,31 +66,37 @@ export function Dashboard({ uiState }) {
     const textToProcess = typeof extractedText === 'string' ? extractedText : inputText;
     if (!textToProcess.trim()) return;
 
+    // ── State transition: loading begins ─────────────────────────────────────
+    console.info('[Stride] ▶ Transform started — routing through /api/stride-ai proxy.');
     setLoading(true);
     setError(null);
     tts.stop();
+
     try {
       const data = await fetchTransformData(textToProcess, isFromPdf);
+
+      // Guard: proxy might return a non-object in edge cases
+      if (!data || typeof data !== 'object') {
+        throw new Error('Stride received an unexpected response shape. Please try again.');
+      }
+
       setAiData(data);
-      
-      // Prompt 3: use the first key term for the Mind Map
+
+      // Use the first key term (or sentence fragment) as the mind-map topic
       const fallbackTopic = textToProcess.split(/[.!?]/)[0].slice(0, 50).trim() || 'Concept Map';
       const topic = data.key_terms?.[0]?.term || fallbackTopic;
-      
+
       fetchMindMapCode(topic).then(setMindmapCode).catch(() => {});
       setActiveTab('text');
+
+      console.info('[Stride] ✔ Transform complete.');
     } catch (err) {
-      console.error('[Stride] transform error:', err.message);
-      if (err.message === 'NO_API_KEY' || err.message === 'INVALID_API_KEY') {
-        setError('Missing or invalid Gemini API key in your .env file.');
-      } else if (err.message === 'RATE_LIMIT') {
-        setError('Rate limit reached. Please wait a moment and try again.');
-      } else if (err.message === 'NETWORK_ERROR') {
-        setError('Network error. Check your internet connection and retry.');
-      } else {
-        setError(`Transform failed (${err.message}). Try with a shorter text or retry.`);
-      }
+      // ── Proxy error messages are already neuro-friendly — surface them directly.
+      console.error('[Stride] ✖ Transform error:', err.message);
+      setError(err.message || 'Something went wrong. Please try once more.');
     } finally {
+      // ── State transition: loading ends ────────────────────────────────────
+      console.info('[Stride] ■ Loading state cleared.');
       setLoading(false);
     }
   };

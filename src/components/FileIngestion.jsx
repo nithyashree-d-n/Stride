@@ -1,5 +1,7 @@
 // src/components/FileIngestion.jsx — Stride Adaptive
-// Drag-and-drop + local file picker zone with PDF/DOCX/TXT support
+// Drag-and-drop + local file picker zone with PDF/DOCX/TXT support.
+// After extraction, the text is handed to Dashboard which routes it through
+// the /api/stride-ai proxy — no file contents or AI keys leave the client directly.
 
 import React, { useRef, useState } from 'react';
 import { parseFile } from '../utils/fileParser';
@@ -29,6 +31,8 @@ export function FileIngestion({ onTextExtracted }) {
       return;
     }
 
+    // ── State transition: file processing begins ──────────────────────────────
+    console.info(`[Stride] ▶ FileIngestion — parsing "${file.name}" (${ext.toUpperCase()})`);
     setStatus('processing');
     setProgress(10);
     setStatusMsg(`Reading ${file.name}…`);
@@ -50,9 +54,14 @@ export function FileIngestion({ onTextExtracted }) {
       const pageInfo = pageCount ? ` (${pageCount} pages)` : '';
       setStatus('done');
       setStatusMsg(`✓ Extracted from ${file.name}${pageInfo} — ${text.length.toLocaleString()} characters`);
+
+      // ── State transition: text handed off → Dashboard routes to proxy ────────
+      console.info(`[Stride] ✔ FileIngestion done — ${text.length} chars → proxy pipeline.`);
       onTextExtracted(text, ext === 'pdf');
     } catch (err) {
       clearInterval(ticker);
+      // ── State transition: file parsing error ──────────────────────────────────
+      console.error('[Stride] ✖ FileIngestion error:', err.message);
       setStatus('error');
       setStatusMsg(err.message || 'Failed to parse file.');
     }
