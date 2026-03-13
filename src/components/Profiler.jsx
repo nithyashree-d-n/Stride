@@ -62,26 +62,24 @@ export function Profiler({ selectedChoices, toggleChoice, onConfirm }) {
                 <div className="col-12 col-sm-6" key={opt.choice}>
                   <button
                     type="button"
-                    className={`bento-panel w-100 text-start h-100 d-flex align-items-center p-3 border-0 position-relative transition-all ${
-                      isActive ? 'bg-primary bg-opacity-10 border border-primary text-white shadow' : 'bg-surface-2'
-                    }`}
                     style={{
-                       backgroundColor: isActive ? 'var(--surface-2)' : 'var(--surface-1)',
-                       transform: isActive ? 'translateY(-2px)' : 'none',
-                       border: isActive ? '2px solid var(--bs-primary)' : '2px solid transparent'
+                      width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center',
+                      padding: '1rem', border: `2px solid ${isActive ? 'var(--bs-primary)' : 'var(--border-color)'}`,
+                      borderRadius: '14px', background: isActive ? 'rgba(124,111,238,0.12)' : 'var(--surface-1)',
+                      cursor: 'pointer', position: 'relative',
+                      transform: isActive ? 'translateY(-2px)' : 'none',
+                      transition: 'all 0.2s ease', gap: '0.85rem'
                     }}
                     onClick={() => toggleChoice(opt.choice)}
                     aria-pressed={isActive}
                   >
-                    <span className="fs-3 me-3" aria-hidden="true">{opt.icon}</span>
-                    <div className="flex-grow-1">
-                      <div className="fw-medium mb-1">{opt.choice}</div>
-                      <div className="small text-muted" style={{ fontSize: '0.8rem' }}>{opt.detail}</div>
+                    <span style={{ fontSize: '1.75rem', lineHeight: 1 }} aria-hidden="true">{opt.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, color: '#e8eaf0', marginBottom: '3px', fontSize: '0.95rem' }}>{opt.choice}</div>
+                      <div style={{ color: '#9ba1b4', fontSize: '0.8rem', lineHeight: 1.5 }}>{opt.detail}</div>
                     </div>
                     {isActive && (
-                      <span className="position-absolute top-50 end-0 translate-middle-y me-3 text-primary fs-4">
-                        <i className="bi bi-check-circle-fill"></i>
-                      </span>
+                      <i className="bi bi-check-circle-fill" style={{ color: 'var(--bs-primary)', fontSize: '1.2rem', flexShrink: 0 }}></i>
                     )}
                   </button>
                 </div>
