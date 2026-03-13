@@ -8,56 +8,6 @@ import { KeyTerms } from './KeyTerms';
 import { FileIngestion } from './FileIngestion';
 import { TTSToolbar, BionicText } from './TTSToolbar';
 
-// ── API Key Modal ─────────────────────────────────────────────────────────────
-function ApiKeyModal({ onSave }) {
-  const [key, setKey] = useState(localStorage.getItem('stride_gemini_key') || '');
-  const [error, setError] = useState('');
-  const handleSave = () => {
-    const k = key.trim();
-    if (!k.startsWith('AIza')) { setError('Key should start with "AIza". Double-check and try again.'); return; }
-    localStorage.setItem('stride_gemini_key', k);
-    onSave(k);
-  };
-  return (
-    <div className="modal fade show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 2000 }}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-color)', borderRadius: '20px' }}>
-          <div className="modal-header border-0 pb-0">
-            <h5 className="modal-title text-white d-flex align-items-center gap-2">
-              <i className="bi bi-key-fill text-primary"></i> Gemini API Key Required
-            </h5>
-          </div>
-          <div className="modal-body pt-2">
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}>
-              Stride uses Gemini 1.5 Flash to transform content. Stored only on this device.
-            </p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1rem' }}>
-              Get a free key at{' '}
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: '#7c6fee' }}>
-                aistudio.google.com →
-              </a>
-            </p>
-            <input type="password" autoFocus
-              style={{ width: '100%', background: 'var(--surface-1)', color: '#e8eaf0', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.65rem 0.9rem', outline: 'none', fontSize: '0.95rem' }}
-              placeholder="AIza..."
-              value={key}
-              onChange={e => setKey(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-            />
-            {error && <div style={{ color: '#ff9999', fontSize: '0.82rem', marginTop: '0.5rem' }}>{error}</div>}
-          </div>
-          <div className="modal-footer border-0 pt-0">
-            <button onClick={handleSave}
-              style={{ background: '#7c6fee', color: '#fff', border: 'none', borderRadius: '20px', padding: '0.55rem 1.5rem', fontWeight: 600, cursor: 'pointer' }}>
-              <i className="bi bi-check2 me-2"></i>Save & Continue
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Line Focus Ruler ──────────────────────────────────────────────────────────
 function LineFocusRuler() {
   const [y, setY] = useState(-200);
@@ -76,11 +26,7 @@ function LineFocusRuler() {
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export function Dashboard({ uiState }) {
-  const { comfortTags, isFocusMode, setIsFocusMode, clearProfile } = uiState;
   const tts = useTTS();
-
-  const [apiKey, setApiKey]         = useState(localStorage.getItem('stride_gemini_key') || '');
-  const [showKeyModal, setShowKeyModal] = useState(!localStorage.getItem('stride_gemini_key'));
 
   const [inputText, setInputText]   = useState('');
   const [inputMode, setInputMode]   = useState('paste'); // 'paste' | 'upload'
@@ -114,26 +60,23 @@ export function Dashboard({ uiState }) {
   // Stop TTS on tab change
   useEffect(() => { tts.stop(); }, [activeTab]);
 
-  const handleSaveKey = k => { setApiKey(k); setShowKeyModal(false); };
-
-  const handleTransform = async () => {
-    if (!inputText.trim()) return;
-    const currentKey = localStorage.getItem('stride_gemini_key') || '';
-    if (!currentKey) { setShowKeyModal(true); return; }
+  const handleTransform = async (extractedText) => {
+    const textToProcess = typeof extractedText === 'string' ? extractedText : inputText;
+    if (!textToProcess.trim()) return;
 
     setLoading(true);
     setError(null);
     tts.stop();
     try {
-      const data = await fetchTransformData(inputText);
+      const data = await fetchTransformData(textToProcess);
       setAiData(data);
-      const topic = inputText.split(/[.!?]/)[0].slice(0, 50).trim() || 'Concept Map';
+      const topic = textToProcess.split(/[.!?]/)[0].slice(0, 50).trim() || 'Concept Map';
       fetchMindMapCode(topic).then(setMindmapCode).catch(() => {});
       setActiveTab('text');
     } catch (err) {
       console.error('[Stride] transform error:', err.message);
       if (err.message === 'NO_API_KEY' || err.message === 'INVALID_API_KEY') {
-        setShowKeyModal(true);
+        setError('Missing or invalid Gemini API key in your .env file.');
       } else if (err.message === 'RATE_LIMIT') {
         setError('Rate limit reached. Please wait a moment and try again.');
       } else if (err.message === 'NETWORK_ERROR') {
@@ -155,7 +98,6 @@ export function Dashboard({ uiState }) {
 
   return (
     <>
-      {showKeyModal && <ApiKeyModal onSave={handleSaveKey} />}
       {lineFocusEnabled && <LineFocusRuler />}
 
       <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', height: '100vh', overflow: 'hidden' }}>
@@ -180,11 +122,6 @@ export function Dashboard({ uiState }) {
           </div>
 
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button onClick={() => setShowKeyModal(true)}
-              style={{ background: apiKey ? 'rgba(86,207,178,0.1)' : 'rgba(255,107,107,0.1)', color: apiKey ? '#56cfb2' : '#ff9999', border: `1px solid ${apiKey ? 'rgba(86,207,178,0.25)' : 'rgba(255,107,107,0.25)'}`, borderRadius: '20px', padding: '0.3rem 0.85rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500 }}>
-              <i className={`bi ${apiKey ? 'bi-key-fill' : 'bi-key'} me-1`}></i>
-              {apiKey ? 'API Key Set' : 'Add API Key'}
-            </button>
             <button onClick={clearProfile}
               style={{ background: 'var(--surface-1)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', borderRadius: '20px', padding: '0.3rem 0.85rem', cursor: 'pointer', fontSize: '0.78rem' }}>
               <i className="bi bi-person-gear me-1"></i>Profile
@@ -225,7 +162,7 @@ export function Dashboard({ uiState }) {
               {/* Upload mode */}
               {inputMode === 'upload' && (
                 <div style={{ marginBottom: '0.85rem' }}>
-                  <FileIngestion onTextExtracted={text => { setInputText(text); setInputMode('paste'); }} />
+                  <FileIngestion onTextExtracted={text => { setInputText(text); setInputMode('paste'); handleTransform(text); }} />
                   {inputText && (
                     <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.85rem', background: 'var(--surface-2)', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                       <i className="bi bi-check-circle text-success me-2"></i>
@@ -300,12 +237,6 @@ export function Dashboard({ uiState }) {
                   <p style={{ maxWidth: '350px', fontSize: '0.88rem', lineHeight: 1.7 }}>
                     Paste or upload any text on the left, then click <strong style={{ color: '#7c6fee' }}>Transform Content</strong> to get simplified summaries, flashcards, key terms, and a visual mind map.
                   </p>
-                  {!apiKey && (
-                    <button onClick={() => setShowKeyModal(true)}
-                      style={{ marginTop: '0.75rem', background: 'rgba(124,111,238,0.12)', color: '#7c6fee', border: '1px solid rgba(124,111,238,0.3)', borderRadius: '20px', padding: '0.45rem 1.2rem', cursor: 'pointer', fontWeight: 500, fontSize: '0.85rem' }}>
-                      <i className="bi bi-key me-2"></i>Add API Key First
-                    </button>
-                  )}
                 </div>
               )}
 

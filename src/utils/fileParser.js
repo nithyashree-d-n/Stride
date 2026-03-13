@@ -9,7 +9,7 @@ export async function parseFile(file) {
 
   if (ext === 'txt' || ext === 'md') {
     const text = await file.text();
-    return { text: text.trim(), pageCount: null };
+    return { text: cleanAndChunkText(text), pageCount: null };
   }
 
   if (ext === 'pdf') {
@@ -48,9 +48,9 @@ async function parsePDF(file) {
     if (pageText) textParts.push(pageText);
   }
 
-  // Clean common PDF noise: standalone page numbers, headers, footers
+  // Clean noise and chunk to 3000 words
   const raw = textParts.join('\n\n');
-  const cleaned = cleanPdfNoise(raw);
+  const cleaned = cleanAndChunkText(raw);
 
   return { text: cleaned, pageCount: totalPages };
 }
@@ -61,19 +61,30 @@ async function parseDOCX(file) {
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
   const text = result.value.replace(/\s+/g, ' ').trim();
-  return { text, pageCount: null };
+  return { text: cleanAndChunkText(text), pageCount: null };
 }
 
-// ── PDF Noise Cleaner ─────────────────────────────────────
-function cleanPdfNoise(text) {
-  return text
+// ── Text Cleaning & Chunking ─────────────────────────────────────
+function cleanAndChunkText(text) {
+  let cleaned = text
+    // Remove non-printable characters & replacement characters
+    .replace(/[^\x20-\x7E\n\r\t\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/g, '')
+    .replace(/\uFFFD/g, '')
     // Standalone page numbers: "Page 3 of 10" / "- 3 -" / lone digits on a line
     .replace(/^Page\s+\d+\s+of\s+\d+/gim, '')
     .replace(/^[-–]\s*\d+\s*[-–]$/gm, '')
     .replace(/^\d+\s*$/gm, '')
     // Repetitive short headers (3 words or fewer repeated 3+ times)
     .replace(/(.{1,40})\n(?:\1\n){2,}/g, '$1\n')
-    // Multiple blank lines → double newline
-    .replace(/\n{3,}/g, '\n\n')
+    // Remove multiple consecutive newlines
+    .replace(/\n{2,}/g, '\n')
     .trim();
+
+  // Chunk to 3000 words maximum to avoid token limit errors
+  const words = cleaned.split(/\s+/);
+  if (words.length > 3000) {
+    cleaned = words.slice(0, 3000).join(' ') + '\n\n[Note: Document was truncated to the first 3000 words to ensure optimal processing.]';
+  }
+
+  return cleaned;
 }
