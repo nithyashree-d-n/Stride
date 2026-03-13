@@ -1,5 +1,5 @@
 /**
- * app.js — Everway Adaptive Orchestrator
+ * app.js — Stride Adaptive Orchestrator
  * Initializes all modules, wires events, manages global state
  */
 
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedProfile = THEME_ENGINE.loadProfile();
   if (savedProfile?.comfortTags?.length) {
     // If profile exists from before, offer to jump in (or go through profiler)
-    console.log('[Everway] Restored profile:', savedProfile.comfortTags);
+    console.log('[Stride] Restored profile:', savedProfile.comfortTags);
   }
 
   // ── Profile Applied ───────────────────────────────────
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
       statusEl.className = 'settings-status error';
       return;
     }
-    localStorage.setItem('everway_gemini_key', key);
+    localStorage.setItem('stride_gemini_key', key);
     statusEl.textContent = '✓ API key saved';
     statusEl.className = 'settings-status success';
     setTimeout(() => { statusEl.textContent = ''; }, 3000);
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function _restoreApiKey() {
-    const key = localStorage.getItem('everway_gemini_key');
+    const key = localStorage.getItem('stride_gemini_key');
     if (key) {
       const field = document.getElementById('gemini-api-key');
       if (field) field.value = key;

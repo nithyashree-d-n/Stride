@@ -4,7 +4,7 @@
  */
 
 const THEME_ENGINE = (() => {
-  const STORAGE_KEY = 'everway_student_profile';
+  const STORAGE_KEY = 'stride_student_profile';
   const BODY = document.body;
 
   const TAG_CLASS_MAP = {

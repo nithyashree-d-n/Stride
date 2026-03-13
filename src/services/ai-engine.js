@@ -16,7 +16,7 @@ Always follow these rules:
 6. Be warm, encouraging, and patient in tone.`;
 
   function getApiKey() {
-    return localStorage.getItem('everway_gemini_key') || '';
+    return localStorage.getItem('stride_gemini_key') || '';
   }
 
   async function callGemini(userPrompt, options = {}) {

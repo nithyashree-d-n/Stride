@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   EVERWAY ADAPTIVE — main.css
+   STRIDE ADAPTIVE — main.css
    Design tokens, base layout, components
    ═══════════════════════════════════════════════════ */
 
@@ -829,6 +829,7 @@ body.adaptive-shell {
 .sensory-slider-group { margin-bottom: 1rem; }
 .sensory-slider {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 5px;
   border-radius: 3px;
