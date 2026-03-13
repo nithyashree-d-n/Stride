@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Everway Adaptive — A personalized, neuro-inclusive learning interface that adapts to how your brain works." />
+  <title>Everway Adaptive | Learn Your Way</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="src/css/main.css" />
+  <link rel="stylesheet" href="src/css/themes.css" />
+</head>
+<body class="adaptive-shell">
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- PANEL 1: COMFORT PROFILER -->
+  <section id="panel-profiler" class="panel panel-active" aria-label="Comfort profiler" role="region">
+    <div class="profiler-bg" aria-hidden="true"></div>
+    <div class="container py-5">
+      <div class="text-center mb-5">
+        <div class="brand-mark mb-3"><span class="brand-icon">⬡</span></div>
+        <h1 class="brand-name">Everway <span class="brand-accent">Adaptive</span></h1>
+        <p class="brand-tagline">Learning shaped around you — no labels, no limits.</p>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+          <div class="profiler-card">
+            <div class="profiler-card-header">
+              <h2 class="profiler-question" id="profiler-heading">
+                Right now, some things feel easier than others.
+                <span class="highlight-text">Pick what feels true for you:</span>
+              </h2>
+              <p class="profiler-subtext">Choose as many as fit. You can change these anytime.</p>
+            </div>
+            <div class="comfort-grid" id="comfort-grid" role="group" aria-labelledby="profiler-heading"></div>
+            <div class="profiler-card-footer">
+              <div class="privacy-badge">
+                <i class="bi bi-shield-check"></i>
+                <span>No diagnosis needed. No data stored on servers.</span>
+              </div>
+              <button id="btn-start-learning" class="btn-start" disabled aria-disabled="true">
+                <i class="bi bi-arrow-right-circle-fill"></i> Start Learning My Way
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANEL 2: LEARNING WORKSPACE -->
+  <section id="panel-workspace" class="panel" aria-label="Learning workspace" role="region" hidden>
+
+    <!-- Top Bar -->
+    <nav class="workspace-topbar" role="navigation" aria-label="Workspace navigation">
+      <div class="container-fluid px-4">
+        <div class="d-flex align-items-center gap-3">
+          <a href="#" id="btn-back-profiler" class="topbar-brand" aria-label="Back to home">⬡ Everway</a>
+          <nav aria-label="Progress" id="breadcrumb-container" class="flex-grow-1"></nav>
+          <div class="d-flex align-items-center gap-2">
+            <div id="pomodoro-badge" class="pomodoro-badge" aria-live="polite">
+              <i class="bi bi-clock"></i> <span id="pomodoro-display">15:00</span>
+            </div>
+            <button class="btn-icon" id="btn-tts-toggle" aria-label="Toggle voice reading" aria-pressed="false">
+              <i class="bi bi-volume-up"></i>
+            </button>
+            <button class="btn-icon" id="btn-settings" aria-label="Open settings" data-bs-toggle="offcanvas" data-bs-target="#settings-panel">
+              <i class="bi bi-sliders"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Workspace Body -->
+    <div class="workspace-body" id="main-content">
+      <div class="d-flex h-100">
+
+        <!-- SIDEBAR -->
+        <aside id="workspace-sidebar" class="workspace-sidebar" aria-label="Learning tools">
+          <div class="sidebar-inner">
+
+            <!-- Pomodoro -->
+            <div class="sidebar-widget">
+              <div class="widget-header"><i class="bi bi-stopwatch-fill"></i><span>Focus Session</span></div>
+              <div class="pomodoro-face" id="pomodoro-face" aria-live="polite">
+                <svg class="pomodoro-ring" viewBox="0 0 120 120" aria-hidden="true">
+                  <circle class="ring-track" cx="60" cy="60" r="52"/>
+                  <circle class="ring-progress" id="pomodoro-ring-progress" cx="60" cy="60" r="52"/>
+                </svg>
+                <div class="pomodoro-center">
+                  <div class="pomodoro-time" id="sidebar-timer">15:00</div>
+                  <div class="pomodoro-label" id="pomodoro-label">Ready</div>
+                </div>
+              </div>
+              <div class="d-flex gap-2 justify-content-center">
+                <button class="btn-pom" id="btn-pom-start"><i class="bi bi-play-fill"></i> Start</button>
+                <button class="btn-pom btn-pom-secondary" id="btn-pom-reset" aria-label="Reset timer"><i class="bi bi-arrow-counterclockwise"></i></button>
+              </div>
+              <div class="sprint-progress mt-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Session</small>
+                  <small id="sprint-count-label">0 / 4</small>
+                </div>
+                <div class="progress" role="progressbar" aria-label="Sprint progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-bar progress-bar-animated" id="sprint-progress-bar" style="width:0%"></div>
+                </div>
+                <div id="sprint-milestone-msg" class="milestone-msg" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <!-- View Mode -->
+            <div class="sidebar-widget">
+              <div class="widget-header"><i class="bi bi-grid-3x3-gap-fill"></i><span>View Mode</span></div>
+              <div class="mode-switcher" role="radiogroup" aria-label="Content mode">
+                <button class="mode-btn active" data-mode="text" role="radio" aria-checked="true"><i class="bi bi-file-text"></i> Simplified</button>
+                <button class="mode-btn" data-mode="flashcards" role="radio" aria-checked="false"><i class="bi bi-card-text"></i> Flashcards</button>
+                <button class="mode-btn" data-mode="mindmap" role="radio" aria-checked="false"><i class="bi bi-diagram-3"></i> Mind Map</button>
+              </div>
+            </div>
+
+            <!-- Time Estimate -->
+            <div class="sidebar-widget">
+              <div class="widget-header"><i class="bi bi-hourglass-split"></i><span>Time Estimate</span></div>
+              <div class="time-estimate">
+                <span class="time-value" id="reading-time-value">—</span>
+                <span class="time-unit">min read</span>
+              </div>
+            </div>
+
+            <!-- Profile -->
+            <div class="sidebar-widget">
+              <div class="widget-header"><i class="bi bi-person-check"></i><span>Your Setup</span></div>
+              <div class="profile-tags" id="sidebar-profile-tags"></div>
+              <button class="btn-outline-small mt-2" id="btn-change-profile"><i class="bi bi-pencil"></i> Change</button>
+            </div>
+
+          </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="workspace-main flex-grow-1">
+          <div class="content-inner">
+
+            <!-- Input Zone -->
+            <div class="input-zone" id="input-zone">
+              <h2 class="input-zone-title">What would you like to explore?</h2>
+              <p class="input-zone-subtitle">Paste any educational text — from a textbook, article, or your notes.</p>
+              <textarea id="content-input" class="adaptive-textarea" placeholder="Paste your learning text here…" rows="5" aria-label="Educational text input"></textarea>
+              <div class="input-actions">
+                <button class="btn-action btn-primary-action" id="btn-generate-flashcards">
+                  <i class="bi bi-card-text"></i> Flashcards
+                </button>
+                <button class="btn-action btn-primary-action" id="btn-generate-mindmap">
+                  <i class="bi bi-diagram-3"></i> Mind Map
+                </button>
+                <button class="btn-action btn-secondary-action" id="btn-simplify">
+                  <i class="bi bi-magic"></i> Simplify (ELI5)
+                </button>
+                <div class="loading-indicator" id="ai-loading" aria-live="polite" hidden>
+                  <div class="spinner"></div><span>Thinking…</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Output Zone -->
+            <div class="output-zone" id="output-zone" aria-live="polite">
+              <div class="output-empty-state" id="output-empty">
+                <div class="empty-icon" aria-hidden="true">✦</div>
+                <p>Your transformed content will appear here.</p>
+              </div>
+            </div>
+
+            <!-- Q&A Zone -->
+            <div class="qa-zone" id="qa-zone" hidden aria-label="Interactive questions">
+              <div class="widget-header mb-3"><i class="bi bi-chat-left-dots-fill"></i><span>Check Your Understanding</span></div>
+              <div id="qa-question-display"></div>
+              <div class="d-flex gap-2 mt-2">
+                <input type="text" id="qa-answer-input" class="adaptive-input flex-grow-1" placeholder="Type your answer…" aria-label="Your answer" />
+                <button class="btn-action btn-primary-action" id="btn-qa-submit"><i class="bi bi-send"></i> Submit</button>
+              </div>
+              <div id="qa-feedback-display" aria-live="polite"></div>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS OFFCANVAS -->
+  <div class="offcanvas offcanvas-end settings-offcanvas" tabindex="-1" id="settings-panel" aria-labelledby="settings-title">
+    <div class="offcanvas-header">
+      <h2 class="offcanvas-title" id="settings-title"><i class="bi bi-sliders"></i> Sensory Controls</h2>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close settings"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div class="settings-section">
+        <h3 class="settings-section-title">Gemini AI</h3>
+        <label class="settings-label" for="gemini-api-key">API Key</label>
+        <div class="d-flex gap-2 mb-1">
+          <input type="password" class="adaptive-input flex-grow-1" id="gemini-api-key" placeholder="AIza…" />
+          <button class="btn-action btn-secondary-action" id="btn-save-api-key">Save</button>
+        </div>
+        <small class="settings-hint">Stored in your browser only.</small>
+        <div id="api-key-status" class="settings-status" aria-live="polite"></div>
+      </div>
+      <hr class="settings-divider"/>
+      <div class="settings-section">
+        <h3 class="settings-section-title">Sensory Adjustments</h3>
+        <div class="sensory-slider-group">
+          <label class="settings-label" for="slider-animation">✨ Animation <span class="slider-value-badge" id="val-animation">2</span></label>
+          <input type="range" class="sensory-slider" id="slider-animation" min="0" max="3" value="2" step="1" />
+          <div class="slider-labels" aria-hidden="true"><span>Still</span><span>Lively</span></div>
+        </div>
+        <div class="sensory-slider-group">
+          <label class="settings-label" for="slider-audio">🔊 Audio <span class="slider-value-badge" id="val-audio">1</span></label>
+          <input type="range" class="sensory-slider" id="slider-audio" min="0" max="3" value="1" step="1" />
+          <div class="slider-labels" aria-hidden="true"><span>Silent</span><span>Full</span></div>
+        </div>
+        <div class="sensory-slider-group">
+          <label class="settings-label" for="slider-contrast">◐ Contrast <span class="slider-value-badge" id="val-contrast">1</span></label>
+          <input type="range" class="sensory-slider" id="slider-contrast" min="0" max="3" value="1" step="1" />
+          <div class="slider-labels" aria-hidden="true"><span>Soft</span><span>Bold</span></div>
+        </div>
+        <div class="sensory-slider-group">
+          <label class="settings-label" for="slider-fontsize">A↕ Text Size <span class="slider-value-badge" id="val-fontsize">16px</span></label>
+          <input type="range" class="sensory-slider" id="slider-fontsize" min="14" max="26" value="16" step="2" />
+          <div class="slider-labels" aria-hidden="true"><span>Smaller</span><span>Larger</span></div>
+        </div>
+      </div>
+      <hr class="settings-divider"/>
+      <div class="settings-section">
+        <h3 class="settings-section-title">Voice Reading</h3>
+        <label class="settings-label" for="voice-select">Voice</label>
+        <select class="adaptive-input w-100 mb-2" id="voice-select"></select>
+        <div class="sensory-slider-group">
+          <label class="settings-label" for="slider-tts-rate">⚡ Speed <span class="slider-value-badge" id="val-tts-rate">1.0×</span></label>
+          <input type="range" class="sensory-slider" id="slider-tts-rate" min="0.5" max="2.0" value="1.0" step="0.1" />
+          <div class="slider-labels" aria-hidden="true"><span>Slow</span><span>Fast</span></div>
+        </div>
+      </div>
+      <hr class="settings-divider"/>
+      <div class="settings-section">
+        <h3 class="settings-section-title">Focus Timer</h3>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="settings-label" for="pom-sprint">Sprint (min)</label>
+            <input type="number" class="adaptive-input" id="pom-sprint" value="15" min="5" max="60" />
+          </div>
+          <div class="col-6">
+            <label class="settings-label" for="pom-break">Break (min)</label>
+            <input type="number" class="adaptive-input" id="pom-break" value="5" min="1" max="30" />
+          </div>
+        </div>
+        <button class="btn-action btn-secondary-action mt-2 w-100" id="btn-save-pom-settings">
+          <i class="bi bi-check-circle"></i> Apply
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- Focus Overlay -->
+  <div id="focus-overlay" class="focus-overlay" hidden aria-hidden="true"></div>
+
+  <!-- Celebration Toast -->
+  <div class="celebration-toast" id="celebration-toast" aria-live="polite" hidden>
+    <div class="celebration-inner">
+      <span class="celebration-emoji" id="celebration-emoji">🎉</span>
+      <span class="celebration-msg" id="celebration-msg">Sprint complete!</span>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script src="src/services/ai-engine.js"></script>
+  <script src="src/services/theme-engine.js"></script>
+  <script src="src/services/tts.js"></script>
+  <script src="src/components/profiler.js"></script>
+  <script src="src/components/flashcards.js"></script>
+  <script src="src/components/mindmap.js"></script>
+  <script src="src/components/pomodoro.js"></script>
+  <script src="src/components/breadcrumb.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
