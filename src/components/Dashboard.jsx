@@ -39,7 +39,7 @@ export function Dashboard({ uiState }) {
   const [activeTab, setActiveTab]   = useState('text');
 
   // Comfort features
-  const [bionicEnabled, setBionicEnabled] = useState(false);
+  const [bionicEnabled, setBionicEnabled] = useState(() => comfortTags?.includes('text_hard') || false);
   const [lineFocusEnabled, setLineFocusEnabled] = useState(false);
 
   // Pomodoro
@@ -61,7 +61,7 @@ export function Dashboard({ uiState }) {
   // Stop TTS on tab change
   useEffect(() => { tts.stop(); }, [activeTab]);
 
-  const handleTransform = async (extractedText) => {
+  const handleTransform = async (extractedText = null, isFromPdf = false) => {
     const textToProcess = typeof extractedText === 'string' ? extractedText : inputText;
     if (!textToProcess.trim()) return;
 
@@ -69,9 +69,13 @@ export function Dashboard({ uiState }) {
     setError(null);
     tts.stop();
     try {
-      const data = await fetchTransformData(textToProcess);
+      const data = await fetchTransformData(textToProcess, isFromPdf);
       setAiData(data);
-      const topic = textToProcess.split(/[.!?]/)[0].slice(0, 50).trim() || 'Concept Map';
+      
+      // Prompt 3: use the first key term for the Mind Map
+      const fallbackTopic = textToProcess.split(/[.!?]/)[0].slice(0, 50).trim() || 'Concept Map';
+      const topic = data.key_terms?.[0]?.term || fallbackTopic;
+      
       fetchMindMapCode(topic).then(setMindmapCode).catch(() => {});
       setActiveTab('text');
     } catch (err) {
@@ -111,15 +115,14 @@ export function Dashboard({ uiState }) {
 
           {/* Feature toggles */}
           <div style={{ display: 'flex', gap: '0.4rem', marginLeft: '0.5rem' }}>
-            {[
-              { label: 'Bionic', active: bionicEnabled, toggle: () => setBionicEnabled(b => !b), title: 'Bold first half of each word' },
-              { label: '📏 Focus', active: lineFocusEnabled, toggle: () => setLineFocusEnabled(l => !l), title: 'Line focus ruler' },
-            ].map(f => (
-              <button key={f.label} onClick={f.toggle} title={f.title}
-                style={{ background: f.active ? 'rgba(124,111,238,0.2)' : 'transparent', color: f.active ? '#7c6fee' : 'var(--text-muted)', border: `1px solid ${f.active ? 'rgba(124,111,238,0.4)' : 'var(--border-color)'}`, borderRadius: '8px', padding: '0.3rem 0.65rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500 }}>
-                {f.label}
-              </button>
-            ))}
+            <button onClick={() => setBionicEnabled(b => !b)} title="Bold first half of each word"
+              style={{ background: bionicEnabled ? 'rgba(124,111,238,0.2)' : 'transparent', color: bionicEnabled ? '#7c6fee' : 'var(--text-muted)', border: `1px solid ${bionicEnabled ? 'rgba(124,111,238,0.4)' : 'var(--border-color)'}`, borderRadius: '8px', padding: '0.3rem 0.65rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500 }}>
+              Bionic
+            </button>
+            <button onClick={() => setLineFocusEnabled(l => !l)} title="Line focus ruler"
+              style={{ background: lineFocusEnabled ? '#7c6fee' : 'transparent', color: lineFocusEnabled ? '#fff' : 'var(--text-muted)', border: `1px solid ${lineFocusEnabled ? '#7c6fee' : 'var(--border-color)'}`, borderRadius: '8px', padding: '0.3rem 0.65rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500 }}>
+              📏 Focus
+            </button>
           </div>
 
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -163,7 +166,7 @@ export function Dashboard({ uiState }) {
               {/* Upload mode */}
               {inputMode === 'upload' && (
                 <div style={{ marginBottom: '0.85rem' }}>
-                  <FileIngestion onTextExtracted={text => { setInputText(text); setInputMode('paste'); handleTransform(text); }} />
+                  <FileIngestion onTextExtracted={(text, isPdf = false) => { setInputText(text); setInputMode('paste'); handleTransform(text, isPdf); }} />
                   {inputText && (
                     <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.85rem', background: 'var(--surface-2)', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                       <i className="bi bi-check-circle text-success me-2"></i>
@@ -281,9 +284,14 @@ export function Dashboard({ uiState }) {
                     </div>
                   )}
 
-                  {activeTab === 'vocab' && <KeyTerms terms={aiData.key_terms} />}
+                  {activeTab === 'vocab' && (
+                    <div>
+                      <h3 style={{ fontFamily: 'Lexend,sans-serif', color: '#e8eaf0', fontWeight: 600, marginBottom: '1.25rem', fontSize: '1.25rem' }}>Key Terms</h3>
+                      <KeyTerms terms={aiData.key_terms} />
+                    </div>
+                  )}
                   {activeTab === 'cards' && <FlashcardSet flashcards={aiData.flashcards} />}
-                  {activeTab === 'map'   && <MermaidMap chartCode={mindmapCode} />}
+                  {activeTab === 'map' && mindmapCode && <MermaidMap chartCode={mindmapCode} />}
                 </div>
               )}
             </div>

@@ -50,7 +50,7 @@ export function FileIngestion({ onTextExtracted }) {
       const pageInfo = pageCount ? ` (${pageCount} pages)` : '';
       setStatus('done');
       setStatusMsg(`✓ Extracted from ${file.name}${pageInfo} — ${text.length.toLocaleString()} characters`);
-      onTextExtracted(text);
+      onTextExtracted(text, ext === 'pdf');
     } catch (err) {
       clearInterval(ticker);
       setStatus('error');

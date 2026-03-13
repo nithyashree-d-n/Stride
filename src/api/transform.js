@@ -1,26 +1,37 @@
-// src/api/transform.js — Stride Adaptive
-// Gemini 1.5 Flash integration with robust error handling, retries, and sanitization
+// src/api/transform.js — Stride Adaptive (Final Production Version)
+// Gemini 1.5 Flash integration with Vite Support, JSON enforcement, and Robust Sanitization
 
 const GEMINI_API_BASE =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
+/**
+ * Retrieves the API Key using Vite's naming convention.
+ * Variables must be prefixed with VITE_ in the .env file.
+ */
 export function getApiKey() {
-  // Use Vite environment variable instead of localStorage
-  return import.meta.env.VITE_GEMINI_API_KEY || '';
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key) {
+    console.error('[Stride] API Key missing. Ensure VITE_GEMINI_API_KEY is in your .env');
+  }
+  return key || '';
 }
 
+/**
+ * Sanitizes input to prevent "BAD_REQUEST" errors caused by 
+ * hidden PDF characters or invalid UTF-8 sequences.
+ */
 function sanitizeInput(text) {
-  // Remove non-printable characters and ensure valid UTF-8 by replacing replacement characters if any
   return text
-    .replace(/[^\x20-\x7E\n\r\t\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/g, '') // Keep typical printable + unicode
-    .replace(/\uFFFD/g, '') // Remove replacement char
+    .replace(/[^\x20-\x7E\n\r\t\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/g, '')
+    .replace(/\uFFFD/g, '')
+    .replace(/\s+/g, ' ') // Collapse multiple spaces/newlines
     .trim();
 }
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
-// ── Core fetch wrapper with Retry ──────────────────────────────────────────────
-async function callGemini(userPrompt, systemInstruction, { maxTokens = 2000, forceJson = false } = {}, retries = 1) {
+// ── Core API Wrapper ──────────────────────────────────────────────────────────
+async function callGemini(userPrompt, systemInstruction, { maxTokens = 2000, forceJson = false } = {}, retries = 2) {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error('NO_API_KEY');
 
@@ -30,7 +41,11 @@ async function callGemini(userPrompt, systemInstruction, { maxTokens = 2000, for
     topP: 0.95,
     maxOutputTokens: maxTokens,
   };
-  if (forceJson) generationConfig.responseMimeType = 'application/json';
+
+  // Use official JSON mode if requested
+  if (forceJson) {
+    generationConfig.responseMimeType = 'application/json';
+  }
 
   const body = {
     contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
@@ -46,127 +61,76 @@ async function callGemini(userPrompt, systemInstruction, { maxTokens = 2000, for
     });
 
     if (!response.ok) {
-      const errObj = await response.json().catch(() => ({}));
-      if (response.status === 400) throw new Error(`BAD_REQUEST`);
+      if (response.status === 400) throw new Error('BAD_REQUEST');
       if (response.status === 403) throw new Error('INVALID_API_KEY');
       if (response.status === 429) throw new Error('RATE_LIMIT');
-      throw new Error(errObj.error?.message || 'API_ERROR');
+      throw new Error('API_ERROR');
     }
 
     const data = await response.json();
-
-    const finishReason = data?.candidates?.[0]?.finishReason;
-    if (finishReason === 'SAFETY') throw new Error('SAFETY_BLOCK');
-    if (finishReason === 'MAX_TOKENS') {
-      console.warn('[Stride] Max tokens hit, response may be truncated');
-    }
-
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error('EMPTY_RESPONSE');
 
+    if (!rawText) throw new Error('EMPTY_RESPONSE');
     return rawText.trim();
+
   } catch (error) {
     if (retries > 0) {
-      console.warn(`[Stride] API call failed (${error.message}). Retrying in 1 second...`);
-      await delay(1000); // 1 second backoff
+      console.warn(`[Stride] Retrying API call... (${retries} left)`);
+      await delay(1500);
       return callGemini(userPrompt, systemInstruction, { maxTokens, forceJson }, retries - 1);
     }
-    // Transform specific errors into neuro-friendly messages
-    throw new Error("Stride is taking a deep breath... Let's try that again in a second.");
+    throw new Error("Stride is taking a deep breath... Try a smaller section of text.");
   }
 }
 
-// ── Helper: extract JSON from text that may have markdown fences ──────────────
-function extractJson(raw) {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const jsonStr = fenced ? fenced[1] : raw;
-  return JSON.parse(jsonStr);
-}
-
-// ── Main transform ─────────────────────────────────────────────────────────────
+// ── Main Content Transformer ──────────────────────────────────────────────────
 export async function fetchTransformData(textPrompt, isPdf = false) {
   const pdfNote = isPdf
-    ? 'The input is from a PDF. Ignore page numbers, citations, and repetitive headers. Produce a continuous learning narrative.'
+    ? 'The input is from a PDF. Ignore page numbers and citations. Focus on a continuous narrative.'
     : '';
 
-  const systemInstruction = `You are an expert Educational Content Designer specialising in Universal Design for Learning (UDL) and Neurodiversity.
-Tone: Encouraging, clear, and jargon-free.
-Use Plain Language: short sentences, active voice, no double negatives.
+  const systemInstruction = `You are an expert Educational Content Designer for Neurodiversity.
+Tone: Encouraging and jargon-free.
+Rules: Use Plain Language. High clarity.
 ${pdfNote}
-CRITICAL: Output ONLY a valid JSON object — no extra text, no markdown fences, no code block delimiters.`;
+Output MUST be a valid JSON object.`;
 
   const sanitizedText = sanitizeInput(textPrompt);
 
-  const userPrompt = `Analyse this text and return a JSON object with EXACTLY these four keys:
+  const userPrompt = `Analyse this text and return a JSON object with these keys: 
+  "simplified_text", "key_terms" (array of 5), "flashcards" (array of 3), "engagement_tip".
+  
+  TEXT:
+  """
+  ${sanitizedText.substring(0, 12000)}
+  """`;
 
-TEXT:
-"""
-${sanitizedText}
-"""
-
-REQUIRED JSON FORMAT (return this exactly, filling in the values):
-{
-  "simplified_text": "A 3-4 sentence summary using 5th-grade vocabulary.",
-  "key_terms": [
-    { "term": "First term", "simple_definition": "Its plain-language meaning." },
-    { "term": "Second term", "simple_definition": "Its plain-language meaning." },
-    { "term": "Third term", "simple_definition": "Its plain-language meaning." },
-    { "term": "Fourth term", "simple_definition": "Its plain-language meaning." },
-    { "term": "Fifth term", "simple_definition": "Its plain-language meaning." }
-  ],
-  "flashcards": [
-    { "question": "Question 1?", "answer": "Answer 1." },
-    { "question": "Question 2?", "answer": "Answer 2." },
-    { "question": "Question 3?", "answer": "Answer 3." }
-  ],
-  "engagement_tip": "One concrete tip for a student with ADHD to stay focused on this topic."
-}`;
-
-  const raw = await callGemini(userPrompt, systemInstruction, { maxTokens: 2000 });
+  const raw = await callGemini(userPrompt, systemInstruction, { maxTokens: 2000, forceJson: true });
 
   try {
-    return extractJson(raw);
-  } catch (parseErr) {
-    console.error('[Stride] JSON parse failed. Raw response:', raw);
-    const start = raw.indexOf('{');
-    const end = raw.lastIndexOf('}');
-    if (start !== -1 && end !== -1) {
-      try {
-        return JSON.parse(raw.slice(start, end + 1));
-      } catch (_) { }
-    }
-    throw new Error("Stride is taking a deep breath... Let's try that again in a second.");
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error('[Stride] JSON Parse Error:', err);
+    throw new Error("Stride had trouble organizing the data. Let's try once more.");
   }
 }
 
-// ── Mind map ──────────────────────────────────────────────────────────────────
+// ── Mind Map Generator ────────────────────────────────────────────────────────
 export async function fetchMindMapCode(topic) {
-  const systemInstruction = `You are an expert Educational Content Designer. Output ONLY raw Mermaid diagram code. No markdown fences, no backticks, no explanation.`;
+  const systemInstruction = "Output ONLY raw Mermaid.js mindmap code. No explanations, no backticks, no markdown.";
 
-  const sanitizedTopic = sanitizeInput(topic);
+  const userPrompt = `Create a Mermaid.js mindmap for: "${sanitizeInput(topic)}".
+  Format:
+  mindmap
+    root((Topic))
+      Branch
+        Subnode`;
 
-  const userPrompt = `Create a Mermaid.js mindmap for: "${sanitizedTopic}".
-Rules:
-- Start with: mindmap
-- Root: root((Topic Name))
-- 3 main branches with 2 sub-nodes each
-- Labels max 3 words, no special characters or quotes
+  const raw = await callGemini(userPrompt, systemInstruction, { maxTokens: 800 });
 
-Example:
-mindmap
-  root((Photosynthesis))
-    Sunlight
-      Energy Source
-      Chlorophyll
-    Water
-      Root Absorption
-      Transport
-    Carbon Dioxide
-      Atmosphere
-      Stomata`;
-
-  const raw = await callGemini(userPrompt, systemInstruction, { maxTokens: 600 });
-  const cleaned = raw.replace(/```(?:mermaid)?\s*/gi, '').replace(/```\s*/g, '').trim();
-  if (!cleaned.startsWith('mindmap')) throw new Error("Stride is taking a deep breath... Let's try that again in a second.");
-  return cleaned;
+  // Strict cleaning for Mermaid rendering
+  return raw
+    .replace(/```(?:mermaid)?\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
 }

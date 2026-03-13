@@ -21,7 +21,10 @@ export const INDIAN_LANGUAGES = [
 export function useTTS() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [rate, setRateState] = useState(0.9);
+  const [rate, setRate] = useState(() => {
+    const saved = parseFloat(localStorage.getItem('stride_tts_rate'));
+    return isNaN(saved) ? 0.9 : saved;
+  });
   const [langCode, setLangCode] = useState('en-IN');
   const [voiceGender, setVoiceGender] = useState('female'); // 'male' | 'female'
   const [highlightedSentenceIndex, setHighlightedSentenceIndex] = useState(-1);
@@ -116,11 +119,15 @@ export function useTTS() {
     setIsPaused(false);
   }, []);
 
-  const setRate = useCallback((r) => setRateState(parseFloat(r)), []);
+  const updateRate = useCallback((r) => {
+    const parsed = parseFloat(r);
+    setRate(parsed);
+    localStorage.setItem('stride_tts_rate', parsed);
+  }, []);
 
   return {
     isSpeaking, isPaused,
-    rate, setRate,
+    rate, setRate: updateRate,
     langCode, setLangCode,
     voiceGender, setVoiceGender,
     highlightedSentenceIndex,
