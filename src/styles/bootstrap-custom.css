@@ -1,0 +1,81 @@
+/* src/styles/bootstrap-custom.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lexend:wght@300;400;500;600&display=swap');
+
+:root {
+  --bs-body-font-family: 'Inter', sans-serif;
+  --bs-primary: #7c6fee;
+  --bs-secondary: #ff8c42;
+  --bs-body-bg: #0e1117;
+  --bs-body-color: #e8eaf0;
+  
+  /* Additional tokens */
+  --surface-1: #161b24;
+  --surface-2: #1c2333;
+  --text-muted: #9ba1b4;
+  --border-color: #2b354d;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+}
+
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-family: var(--bs-body-font-family);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Card Overrides */
+.card, .bento-panel {
+  background-color: var(--surface-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.bento-panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  font-family: 'Lexend', sans-serif;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--surface-2);
+}
+
+.bento-panel-body {
+  padding: 1.25rem;
+}
+
+/* Button Customizations */
+.btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  border-radius: var(--radius-md);
+  font-family: 'Lexend', sans-serif;
+  font-weight: 500;
+  padding: 0.6rem 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #5a4ed4;
+  border-color: #5a4ed4;
+  transform: translateY(-1px);
+}
+
+/* Brand styling */
+.brand-name {
+  font-family: 'Lexend', sans-serif;
+  font-weight: 700;
+  font-size: 2.2rem;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.brand-accent {
+  color: var(--bs-secondary);
+  font-weight: 400;
+}

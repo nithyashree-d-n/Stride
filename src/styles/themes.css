@@ -1,0 +1,80 @@
+/* src/styles/themes.css */
+/* Neuro-adaptive overrides mapped to hook states */
+
+/* 1. Dyslexia Mode */
+body.profile-dyslexic {
+  /* Note: In a real app we would load OpenDyslexic locally via @font-face */
+  --bs-body-font-family: 'Lexend', sans-serif; 
+  letter-spacing: 0.04em;
+  word-spacing: 0.1em;
+  line-height: 1.8;
+}
+
+body.profile-dyslexic p {
+  margin-bottom: 1.5rem;
+}
+
+/* 2. Low Contrast / Sensory */
+body.profile-sensory {
+  --bs-body-bg: #1a1e26;
+  --bs-body-color: #c0c4ce;
+  --surface-1: #20242d;
+  --surface-2: #242934;
+  --border-color: #2b354d;
+  --bs-primary: #6b60cc;
+  filter: brightness(0.95) contrast(0.95);
+}
+
+body.profile-sensory * {
+  text-shadow: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 3. ADHD Focus Mode */
+body.profile-adhd.focus-mode-active .workspace-sidebar {
+  opacity: 0.1;
+  pointer-events: none;
+  filter: blur(4px);
+  transition: all 0.5s ease;
+}
+
+body.profile-adhd.focus-mode-active .workspace-main {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+body.profile-adhd .bento-panel.focus-target {
+  border: 2px solid var(--bs-secondary);
+  box-shadow: 0 0 15px rgba(255, 140, 66, 0.2);
+}
+
+body.profile-adhd ::selection {
+  background-color: var(--bs-secondary);
+  color: #fff;
+}
+
+/* 4. Autism Comfort */
+body.profile-autism {
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --bs-primary: #559db2; /* Calmer blue */
+  --bs-secondary: #d39556; /* Calmer muted orange */
+  --bs-body-bg: #141b21;
+}
+
+body.profile-autism * {
+  /* Force softer transitions globally */
+  transition-duration: 0.4s !important;
+}
+
+body.profile-autism .brand-accent {
+  color: var(--bs-primary);
+}
+
+/* 5. Slow Reader (Typically handled by enabling TTS in JS, but UI cues help) */
+body.profile-slow-reader .readable-text {
+  font-size: 110%;
+}
