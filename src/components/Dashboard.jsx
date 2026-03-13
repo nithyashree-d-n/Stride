@@ -26,6 +26,7 @@ function LineFocusRuler() {
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export function Dashboard({ uiState }) {
+  const { comfortTags, isFocusMode, setIsFocusMode, clearProfile } = uiState;
   const tts = useTTS();
 
   const [inputText, setInputText]   = useState('');
